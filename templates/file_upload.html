@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+{% block additional_css %}
+  <style>
+    #upload_files {
+      position: relative;
+      left: -25px;
+    }
+  </style>
+{% endblock %}
+{% block layout %}
+  <div class="wrapper" id="main-container">
+    <div class="container-fluid">
+      <div class="row">
+        <main role="main" class="col-12 px-4">
+          <div class="panel" id="filters">
+            <div class="panel-title">
+              <h3 class="pl-3 pt-1 mb-0">Tinker Time 2021</h3>
+            </div>
+            <div class="panel-content panel-last rounded">
+              {% if status == 'error' %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                  <strong>Error</strong> {{ message }}
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+              {% elif status == 'success' %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <strong>Success</strong> {{ message }}
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+              {% endif %}
+
+              <div class="offset-2 col-8">
+                <form method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+
+                  <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Upload CSV File</label>
+                    <div class="col-sm-10">
+                      <div class="custom-file">
+                        <input type="file" name="xandr" class="custom-file-input" id="xandr" required>
+                        <label class="custom-file-label" for="xandr">Choose CSV File</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group row">
+                    <div class="offset-11 col-sm-1 align-items-end">
+                      <button id="upload_files" type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="panel-footer site-text d-none"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block additional_scripts %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function () {
+ 
+});
+</script>
+{% endblock %}

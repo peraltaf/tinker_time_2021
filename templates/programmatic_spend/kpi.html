@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% load static %}
+{% block additional_css %}
+<style>
+  #update,
+  #export {
+    top: 19px;
+    position: relative;
+  }
+
+  .nav-item > select {
+    border: 0 !important;
+  }
+</style>
+{% endblock %}
+{% block layout %}
+  <div class="wrapper" id="main-container">
+    <div class="container-fluid">
+      <div class="row">
+        <main role="main" class="col-12 px-4">
+          <div class="panel" id="filters">
+            <div class="panel-content rounded" style="min-height:0px;">
+              <ul class="nav">
+                <li class="nav-item">
+                  <span class="menu-label">Granularity</span><br />
+                  <select id="granularity">
+                    <option value="month_id" data-target="month_ids" selected>Month</option>
+                    <option value="quarter_id" data-target="quarter_ids">Quarter</option>
+                    <option value="year" data-target="year_ids">Year</option>
+                  </select>
+                </li>
+                <li>&nbsp;&nbsp;</li>
+                <li>&nbsp;&nbsp;</li>
+                <li>&nbsp;&nbsp;</li>
+                <li class="nav-item">
+                  <span class="menu-label">Date Range</span><br />
+                  <!-- <select class="date-range active" id="week_ids"></select> -->
+                  <select class="date-range active" id="month_ids"></select>
+                  <select class="date-range d-none" id="quarter_ids"></select>
+                  <select class="date-range d-none" id="year_ids"></select>
+                </li>
+                <li>&nbsp;&nbsp;</li>
+                <li>&nbsp;&nbsp;</li>
+                <li>&nbsp;&nbsp;</li>
+                <li class="nav-item">
+                  <button type="button" id="update" class="btn btn-sm btn-primary">View Data</button>
+                </li>
+                <li>&nbsp;&nbsp;</li>
+                <li class="nav-item">
+                  <button type="button" id="export" class="btn btn-sm purple-background d-none">Export Data</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="alert alert-warning d-none curr-month-msg" role="alert">
+                Please note, you have selected the current month which will display only partial data. The US Open Exchange Spenders dataset is manually updated via CSV files on a weekly basis.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="panel panel-last" id="filters">
+                <div class="panel-title">
+                  <h5 class="pl-3 pt-1 mb-0"><span class="date-label"></span>US Open Exchange Spenders</h5>
+                </div>
+                <div class="panel-content rounded">
+                  <table class="table table-sm table-hover table-striped" id="third_party">
+                    <thead>
+                      <tr>
+                        <th>Advertiser</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="panel panel-last" id="filters">
+                <div class="panel-title">
+                  <h5 class="pl-3 pt-1 mb-0"><span class="date-label"></span>US PMP Spenders</h5>
+                </div>
+                <div class="panel-content rounded">
+                  <table class="table table-sm table-hover table-striped" id="burt">
+                    <thead>
+                      <tr>
+                        <th>Advertiser</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block additional_scripts %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function () {
+  const start_dt = moment('2021-01-01', 'YYYY-MM-DD');
+  const start_year = 2021;
+  const currency = d3.format('($,.2f');
+  const ed = moment();
+  let completed_queries = 0;
+
+  /*** WEEK MENU ***/
+  // const curr_dt = +moment().format('YYYYMMDD');
+  // const format_dates = sd => {
+  //   let interim = sd.clone();
+  //   let months = [];
+
+  //   while (ed > interim || interim.format('M') === ed.format('M')) {
+  //     months.push(interim.format('YYYYMM'));
+  //     interim.add(1,'month');
+  //   }
+
+  //   return months.reduce((a,c) => {
+  //     let date_obj = moment(c, 'YYYYMM')
+  //     let days_in_month = date_obj.daysInMonth();
+  //     let menu_item = '';
+  //     let month = date_obj.format('MMM');
+  //     let year = date_obj.format('YYYY');
+  //     let month_id = date_obj.format('YYYYMM');
+
+  //     for (i=1;i<=days_in_month;i+=7) {
+  //       let end_dt = i+6 >= days_in_month ? days_in_month : i+6;
+  //       let inner_sd = +moment(`${year}${month}${i}`, 'YYYYMMMD').format('YYYYMMDD');
+  //       let inner_ed = +moment(`${year}${month}${end_dt}`, 'YYYYMMMD').format('YYYYMMDD');
+  //       let selected = (curr_dt >= inner_sd && curr_dt <= inner_ed) ? 'selected' : '';
+  //       menu_item = `${menu_item}<option value="${month_id}${i}-${month_id}${end_dt}" ${selected}>${month} ${i}, ${year} - ${month} ${end_dt}, ${year}</option>`;
+  //     }
+
+  //     return `${a}${menu_item}`;
+  //   }, '');
+  // }
+
+  // let week_menu = format_dates(start_dt);
+  // $('#week_ids').append(week_menu);
+  /*** END WEEK MENU ***/
+
+  /*** YEAR MENU ***/
+  let num_years = moment().diff(start_dt, 'years');
+  let years = [];
+
+  for(i=num_years;i >= 0; i--) {
+    years.push(start_year+i)
+  }
+
+  years.sort().forEach(d => {
+    let selected = d === start_year ? 'selected' : '';
+    $('#year_ids').append(`<option value="${d}" ${selected}>${d}</option>`);
+  });
+  /*** END YEAR MENU ***/
+
+  /*** QUARTER MENU ***/
+  let curr_quarter = `${ed.year()}Q${ed.quarter()}`;
+  let quarter_menu = years.sort().reduce((a,c) => {
+    let q1_selected = curr_quarter === `${c}Q1` ? 'selected' : '';
+    let q2_selected = curr_quarter === `${c}Q2` ? 'selected' : '';
+    let q3_selected = curr_quarter === `${c}Q3` ? 'selected' : '';
+    let q4_selected = curr_quarter === `${c}Q4` ? 'selected' : '';
+
+    return `${a}<option val="${c}Q1" ${q1_selected}>${c}Q1</option>
+    <option val="${c}Q2" ${q2_selected}>${c}Q2</option>
+    <option val="${c}Q3" ${q3_selected}>${c}Q3</option>
+    <option val="${c}Q4" ${q4_selected}>${c}Q4</option>`;
+  },'');
+
+  $('#quarter_ids').append(quarter_menu);
+  /*** END QUARTER MENU ***/
+
+  /*** MONTH MENU ***/
+  let month_ids = [];
+
+  while (ed > start_dt || start_dt.format('M') === ed.format('M')) {
+     month_ids.push(start_dt.format('YYYYMM'));
+     start_dt.add(1,'month');
+  }
+
+  month_ids.forEach(d => {
+    let selected = ed.format('YYYYMM') === d ? 'selected': '';
+    $('#month_ids').append(`<option value="${d}" ${selected}>${moment(d, 'YYYYMM').format('MMM YYYY')}</option>`);
+  });
+  /*** END MONTH MENU ***/
+
+  const data_api = async (type='GET', url='', data={}, callback) => {
+    let params = '';
+    let payload =  {
+      method: type,
+      mode: 'no-cors',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      referrerPolicy: 'no-referrer',
+    }
+
+    if (type === 'GET') {
+      params = Object.entries(data).reduce((a,c) => `${a}${c[0]}=${c[1]}&`, '').slice(0,-1);
+    } else if (type === 'POST') {
+      payload['body'] = JSON.stringify(data);
+    }
+
+    const response = await fetch(`${url}?${params}`, payload)
+      .then(resp => {
+        return resp.text().then(text => {
+          return text ? JSON.parse(text) : {}
+        });
+      })
+      .then(data => callback(data));
+  }
+
+  $('#granularity').on('change', function() {
+    let target = $('#granularity option:selected').data().target;
+    [...$('.date-range')].forEach(d => {
+      $(d).addClass('d-none');
+      $(d).removeClass('active');
+    });
+    $(`#${target}`).removeClass('d-none');
+    $(`#${target}`).addClass('active');
+  });
+
+  $('#update').on('click', function() {
+    const report_types = ['third_party','burt'];
+    let payload = {
+      'granularity': $('#granularity option:selected').val(),
+      'date_filter': $('.date-range.active').val(),
+    }
+    window.date_filter = payload.date_filter;
+    $('#export').addClass('d-none');
+    completed_queries = 0;
+
+    report_types.forEach(d => {
+      payload.type = d;
+      data_api(`GET`, `api/`, payload, databack => {
+        $(`#${d} tbody`).empty();
+        databack.forEach(r => {
+          $(`#${d} tbody`).append(`<tr>
+            <td>${r.advertiser}</td>
+            <td>${currency(r.revenue)}</td>
+            </tr>`)
+        });
+
+        window[d] = databack;
+        completed_queries++;
+        if (completed_queries == 2) {
+          $('#export').removeClass('d-none')
+          if (ed.format('YYYYMM') === $('.date-range.active').val()) {
+            $('.curr-month-msg').removeClass('d-none');
+          } else {
+            $('.curr-month-msg').addClass('d-none');
+          }
+        };
+      });
+    });
+  });
+
+  $('#export').on('click', function() {
+    /*** Custom export that doesn't use the global one in the Sales Hub ***/
+    $.confirm({
+      title: 'Enter a filename',
+      content: `
+        <form action="" class="formName">
+          <div class="form-group">
+            <input type="text" placeholder="Enter a filename" class="name form-control" required />
+          </div>
+        </form>`,
+      buttons: {
+        formSubmit: {
+          text: 'Submit',
+          btnClass: 'btn-blue',
+          action: function () {
+            let data_export = {
+              'filename': this.$content.find('.name').val(),
+              'date_filter': window.date_filter,
+              'third_party': window.third_party,
+              'burt': window.burt
+            }
+
+            let wait_msg = alert_msg('Please wait while we prepare your data export.', 'Please wait...', 'gray');
+
+            data_api(`POST`, `export/`, data_export, databack => {
+              wait_msg.close();
+              if (databack.status === 'success') {
+                alert_msg(`Your data has been exported to the following Google Spreadsheet: <a style="text-decoration:underline;color:#76C3FF !important;word-wrap: break-word !important;" href="https://docs.google.com/spreadsheets/d/${databack.sheet_id}/" target="_blank">https://docs.google.com/spreadsheets/d/${databack.sheet_id}/</a>`, 'Data Export Successful', 'green');
+              } else {
+                alert_msg(databack.message, 'Data Export Failed', 'red');
+              }
+            });
+          }
+        },
+        cancel: {
+          action: function(){},
+          btnClass: 'btn-secondary'
+        }
+      },
+      onContentReady: function() {
+        let jc = this;
+        this.$content.find('form').on('submit', function(e) {
+          e.preventDefault();
+          jc.$$formSubmit.trigger('click');
+        });
+      }
+    });
+  });
+
+  $('#update').click();
+});
+</script>
+{% endblock %}
