@@ -16,12 +16,12 @@ import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-try:
-    creds = ServiceAccountCredentials.from_json_keyfile_name('/Users/fperalta/Dropbox/mt-data-products_rv-mt-data-prod.json', scope)
-except:
-    creds = ServiceAccountCredentials.from_json_keyfile_name('/usr/local/deploy/sales_hub/current/programmatic_spend/mt-data-products_rv-mt-data-prod.json', scope)
-client = gspread.authorize(creds)
+# scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+# try:
+#     creds = ServiceAccountCredentials.from_json_keyfile_name('/Users/fperalta/Dropbox/mt-data-products_rv-mt-data-prod.json', scope)
+# except:
+#     creds = ServiceAccountCredentials.from_json_keyfile_name('/usr/local/deploy/sales_hub/current/programmatic_spend/mt-data-products_rv-mt-data-prod.json', scope)
+# client = gspread.authorize(creds)
 # sheet = client.open('Sales Hub').get_worksheet(0)
 # ctx = [{ 'title': r[0], 'desc': r[1], 'url': r[2], 'images': r[3], 'visibility': r[4] } for r in sheet.get_all_values()[1:]]
 
