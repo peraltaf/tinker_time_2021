@@ -12,6 +12,14 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
+import socket
+import pymongo
+from pymongo import MongoClient
+from pymongo.read_preferences import ReadPreference
+# import pymysql
+
+# pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -97,6 +105,9 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+### MongoDB Connections ###
+MONGO_READER = MongoClient(host=os.environ.get('MONGO_DEV'))
+MONGO_WRITER = MongoClient(host=os.environ.get('MONGO_DEV'))
 
 
 # Password validation
